@@ -5,6 +5,7 @@
 
 import type { AgentLaunchPaneVerdictEvent } from '../../../shared/agent-launch-pane-verdict'
 import { applyClosedTerminalLeafNotice } from '@/components/terminal-pane/closed-terminal-leaf-notice'
+import { collectLeafIdsInOrder } from '@/components/terminal-pane/terminal-layout-leaf-ids'
 import { useAppStore } from '@/store'
 import { forgetAgentLaunchPanePrompt } from './agent-launch-pane-prompt'
 
@@ -23,10 +24,18 @@ export function applyAgentLaunchPaneVerdict(event: AgentLaunchPaneVerdictEvent):
       state.setTabAgentLaunchPane(tabId, undefined)
       return
     case 'not-started':
-    case 'unconfirmed':
+    case 'unconfirmed': {
+      const root = state.terminalLayoutsByTabId[tabId]?.root
+      if (root && !collectLeafIdsInOrder(root).includes(leafId)) {
+        // The user closed that pane: nothing is left for the outcome to describe.
+        forgetAgentLaunchPanePrompt(tabId)
+        state.setTabAgentLaunchPane(tabId, undefined)
+        return
+      }
       // Final for this pane, for the tab's life: no later spawn needs the launch record.
       state.setTabAgentLaunchPane(tabId, { ...tab.agentLaunchPane, outcome: verdict })
       return
+    }
     case 'withdrawn': {
       forgetAgentLaunchPanePrompt(tabId)
       // The pane alone when the user split the tab while it waited; their split stays.

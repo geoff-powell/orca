@@ -63,7 +63,8 @@ export function registerTerminalPresentationIpcBridge(unsubs: (() => void)[]): v
           if (ptyId && tabId && leafId && wasAgentLaunchPaneClosedByUser(tabId, leafId)) {
             // The user closed the launch's tab or pane while it waited. That close wins: it stays
             // closed, and its agent stops, as closing any tab stops what runs in it.
-            void window.api.pty.kill(ptyId)
+            // The host stops the same agent; a second kill of a retired PTY may reject, harmlessly.
+            window.api.pty.kill(ptyId).catch(() => {})
             throw new Error('agent_launch_tab_closed')
           }
           // Why: a split pane revealed from mobile is only bound in the persisted

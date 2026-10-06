@@ -82,17 +82,32 @@ export function trackRunningAgentLaunchPane(
   }
 }
 
+function runningLaunchesIn(
+  worktreeId: string,
+  target: TerminalSurfaceCloseTarget
+): RunningLaunch[] {
+  return [...runningLaunchesByPane.values()].filter((running) => {
+    const pane = running.pane.worktreeId === worktreeId ? parsePaneKey(running.pane.paneKey) : null
+    return pane?.tabId === target.tabId && (target.kind === 'tab' || pane.leafId === target.leafId)
+  })
+}
+
 /** The user closed a tab, or one pane of it: every launch still running there stops. */
 export function markAgentLaunchesClosedByUser(
   worktreeId: string,
   target: TerminalSurfaceCloseTarget
 ): void {
-  for (const running of runningLaunchesByPane.values()) {
-    const pane = running.pane.worktreeId === worktreeId ? parsePaneKey(running.pane.paneKey) : null
-    if (pane?.tabId === target.tabId && (target.kind === 'tab' || pane.leafId === target.leafId)) {
-      running.closedByUser = true
-    }
+  for (const running of runningLaunchesIn(worktreeId, target)) {
+    running.closedByUser = true
   }
+}
+
+/** A launch still owns this pane: only its own spawn may put a process there. */
+export function isAgentLaunchRunningIn(
+  worktreeId: string,
+  target: TerminalSurfaceCloseTarget
+): boolean {
+  return runningLaunchesIn(worktreeId, target).length > 0
 }
 
 function launchRanInPane(row: AgentSessionOperationRow, paneKey: string): boolean {

@@ -250,10 +250,10 @@ describe('launchAgentInExistingWorkspace', () => {
     })
   })
 
-  it('says the launch was stopped when its tab was closed on the computer, in its own words', async () => {
+  it('reads a closed tab as the user stopping the launch, not as the launch failing', async () => {
     const { client } = scriptedClient(refused('agent_launch_tab_closed'))
     await expect(launch(client)).resolves.toEqual({
-      kind: 'failed',
+      kind: 'tab-closed',
       message: AGENT_LAUNCH_TAB_CLOSED_MESSAGE
     })
   })

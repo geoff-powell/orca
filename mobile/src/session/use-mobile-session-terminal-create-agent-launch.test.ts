@@ -26,6 +26,7 @@ import { releaseTerminalCreateLock } from './terminal-create-lock'
 import { useMobileSessionTerminalCreateActions } from './use-mobile-session-terminal-create-actions'
 
 vi.mock('../platform/haptics', () => ({ triggerSuccess: vi.fn(), triggerError: vi.fn() }))
+const { triggerError } = await import('../platform/haptics')
 
 const LAUNCH_CAPABILITIES = [
   'agent.launch.v2',
@@ -355,6 +356,19 @@ describe('the + menu', () => {
     await create_(scope(client), 'aider')
 
     expect(methods(sendRequest)).toEqual(['agent.launchReplay', 'session.tabs.createTerminal'])
+  })
+
+  it('says nothing when a user closed the tab the launch opened: the tab going is the answer', async () => {
+    const { client } = scriptedClient(refusal('agent_launch_tab_closed'))
+    const state = scope(client)
+    vi.mocked(triggerError).mockClear()
+
+    await create_(state, 'claude')
+
+    expect(state.showToast).not.toHaveBeenCalled()
+    expect(state.setCreateError).not.toHaveBeenCalledWith(expect.stringMatching(/./))
+    expect(triggerError).not.toHaveBeenCalled()
+    expect(state.pendingSelectionRef.current).toBeNull()
   })
 
   it("shows the host's refusal even when the session already has tabs", async () => {
