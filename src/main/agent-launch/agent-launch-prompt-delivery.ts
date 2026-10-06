@@ -71,13 +71,12 @@ async function confirmCarriedTerminalPrompt(
   created: CreatedSurface
 ): Promise<AgentLaunchPromptDisposal> {
   const { intent, surfaces } = execution
-  if (created.launchStartedAt === undefined || !surfaces.confirmCarriedTerminalPrompt) {
+  if (!surfaces.confirmCarriedTerminalPrompt) {
     return HANDED_TO_TERMINAL
   }
   return surfaces.confirmCarriedTerminalPrompt({
     handle: created.outcome.handle,
-    agent: intent.agent,
-    launchStartedAt: created.launchStartedAt
+    agent: intent.agent
   })
 }
 

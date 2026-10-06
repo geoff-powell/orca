@@ -55,8 +55,9 @@ export function agentLaunchSurfaceFactory(
   // close can both land after admission.
   earlyTab: Pick<EarlyAgentLaunchTab, 'windowShowsTab' | 'closedByUser'> | null = null
 ): AgentLaunchSurfaceFactory {
-  // The facts each agent terminal was planned by, so its paste and its receipt read the same host.
-  const launchHostByHandle = new Map<string, LaunchHost>()
+  // What each agent terminal was launched with: the facts it was planned by, so its paste and its
+  // receipt read the same host, and when it was asked for, so only a later turn proves its prompt.
+  const launchByHandle = new Map<string, { host?: LaunchHost; startedAt: number }>()
   return {
     createStructuredSession: async ({
       worktreeId,
@@ -179,9 +180,10 @@ export function agentLaunchSurfaceFactory(
         await context.runtime.closeTerminal(terminal.handle).catch(() => {})
         throw new AgentLaunchTabClosedError()
       }
-      if (launchHost) {
-        launchHostByHandle.set(terminal.handle, launchHost)
-      }
+      launchByHandle.set(terminal.handle, {
+        ...(launchHost ? { host: launchHost } : {}),
+        startedAt: launchStartedAt
+      })
       return {
         handle: terminal.handle,
         // The runtime already minted this pane and baked it into the PTY's env and its own reveal;
@@ -189,8 +191,7 @@ export function agentLaunchSurfaceFactory(
         ...(terminal.paneKey ? { paneKey: terminal.paneKey } : {}),
         // Its only warning is that the host could not reveal the tab, which the caller shows itself.
         ...(terminal.warning && !callerPresentsSurface ? { warning: terminal.warning } : {}),
-        ...(promptRodeLaunchCommand ? { promptRodeLaunchCommand } : {}),
-        launchStartedAt
+        ...(promptRodeLaunchCommand ? { promptRodeLaunchCommand } : {})
       }
     },
     deliverTerminalPrompt: async ({ handle, agent, freshLaunch, prompt }) =>
@@ -201,21 +202,23 @@ export function agentLaunchSurfaceFactory(
         freshLaunch,
         text: prompt.text,
         // A Windows cmd or PowerShell pane can prove its shell alone, so only that refuses the paste.
-        unprovableHost: windowsPaneProvesShell(launchHostByHandle.get(handle))
+        unprovableHost: windowsPaneProvesShell(launchByHandle.get(handle)?.host)
           ? 'write-unless-shell'
           : 'refuse'
       }),
-    confirmCarriedTerminalPrompt: async ({ handle, agent, launchStartedAt }) =>
+    confirmCarriedTerminalPrompt: async ({ handle, agent }) => {
+      const launch = launchByHandle.get(handle)
       // Where the host can see the agent, a caller that reads the newer receipt waits to hear of an
       // exit at startup; elsewhere (Windows, the phone) the prompt is handed over at once.
-      readsUnconfirmedLaunchPrompt(context) && launchHostByHandle.get(handle)?.provesAgentInFront
+      return readsUnconfirmedLaunchPrompt(context) && launch?.host?.provesAgentInFront
         ? proveCarriedTerminalAgentLaunchPrompt({
             runtime: context.runtime,
             handle,
             agent,
-            launchStartedAt
+            launchStartedAt: launch.startedAt
           })
         : HANDED_TO_TERMINAL
+    }
   }
 }
 

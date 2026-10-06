@@ -45,8 +45,6 @@ export type AgentLaunchSurfaceFactory = {
     warning?: string
     /** Reported by the surface that built the launch command, never predicted by the executor. */
     promptRodeLaunchCommand?: boolean
-    /** When the terminal was asked for, so only a later turn proves a carried prompt. */
-    launchStartedAt?: number
   }>
   /**
    * Commits the launch text as the session's first turn, answering with the transcript row's id.
@@ -83,8 +81,6 @@ export type AgentLaunchSurfaceFactory = {
   confirmCarriedTerminalPrompt?(args: {
     handle: string
     agent: TuiAgent
-    /** Taken before the spawn: only a turn after it proves this prompt. */
-    launchStartedAt: number
   }): Promise<AgentLaunchPromptDisposal>
 }
 
