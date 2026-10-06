@@ -27,7 +27,7 @@ export const MOBILE_RUNTIME_CLIENT_CAPABILITIES = remoteRuntimeClientCapabilitie
   AGENT_LAUNCH_RUNTIME_CAPABILITY,
   // Reads a listed launch tab with no terminal yet as not started, so the host may show it early.
   AGENT_LAUNCH_UNSTARTED_TAB_CLIENT_CAPABILITY,
-  // Reads `agent_launch_tab_closed` (its tab was closed on the computer) as a definite answer.
+  // Reads `agent_launch_tab_closed` (a user closed its tab, which stopped it) as a definite answer.
   AGENT_LAUNCH_TAB_CLOSED_CLIENT_CAPABILITY
 ])
 

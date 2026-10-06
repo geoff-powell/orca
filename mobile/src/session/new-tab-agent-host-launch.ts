@@ -99,6 +99,11 @@ export async function launchNewTabAgentThroughHost(args: {
     args.reportCreateFailure(launched.message)
     return true
   }
+  if (launched.kind === 'tab-closed') {
+    // Why silent: the tab this "+" opened is gone, which is the answer; the close was a user's own.
+    pendingSelectionRef.current = withoutUnansweredLaunch(pendingSelectionRef.current, args.lock)
+    return true
+  }
   if (launched.kind === 'unknown') {
     // Why: a listed tab proves the agent started, so only the prompt is in doubt; notes stay unsent.
     if (isLaunchedSurfaceListed(args.getSessionTabs(), reservation)) {

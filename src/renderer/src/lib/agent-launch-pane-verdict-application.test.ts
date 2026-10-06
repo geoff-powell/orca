@@ -77,6 +77,17 @@ describe("a launch pane's verdict in the window", () => {
     expect(agentLaunchPanePrompt(tabId)).toBe('fix the build')
   })
 
+  it('final, for a launch pane the user already closed out of a split: nothing is kept', () => {
+    store.getState().setTabLayout(tabId, {
+      root: { type: 'leaf', leafId: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d' },
+      activeLeafId: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
+      expandedLeafId: null
+    })
+    apply({ kind: 'not-started', code: 'agent_launch_tab_closed' })
+    expect(launchTab()?.agentLaunchPane).toBeUndefined()
+    expect(agentLaunchPanePrompt(tabId)).toBeNull()
+  })
+
   it('withdrawn: a tab with only the launch pane goes', () => {
     apply({ kind: 'withdrawn' })
     expect(launchTab()).toBeUndefined()

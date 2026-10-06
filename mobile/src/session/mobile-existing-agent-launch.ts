@@ -44,8 +44,9 @@ export const AGENT_LAUNCH_UNCONFIRMED_MESSAGE =
 
 // The host started nothing, and the next tap reserves new ids.
 export const AGENT_LAUNCH_RESERVATION_TAKEN_MESSAGE = "Couldn't start the agent. Try again."
+// Who closed it, and whether the agent had started, are unknown here: the phone or the computer.
 export const AGENT_LAUNCH_TAB_CLOSED_MESSAGE =
-  "The agent's tab was closed on the computer before it started, so it was stopped."
+  "The agent's tab was closed, so the agent was stopped."
 
 /**
  * The tab a launch will create, named by this device before it asks, so it can land there as soon
@@ -82,6 +83,8 @@ export type MobileExistingAgentLaunch =
   | { kind: 'failed'; message: string }
   /** The agent may or may not be running; the caller must not launch again on its own. */
   | { kind: 'unknown'; message: string }
+  /** A user closed the launch's tab, which stopped it; not a failure of the launch. */
+  | { kind: 'tab-closed'; message: string }
 
 export function supportsMobileExistingAgentLaunch(
   hostCapabilities: readonly string[] | null | undefined
@@ -169,7 +172,7 @@ function classifyLaunchRefusal(
         return { kind: 'failed', message: AGENT_LAUNCH_RESERVATION_TAKEN_MESSAGE }
       }
       if (error.code === AGENT_LAUNCH_TAB_CLOSED_CODE) {
-        return { kind: 'failed', message: AGENT_LAUNCH_TAB_CLOSED_MESSAGE }
+        return { kind: 'tab-closed', message: AGENT_LAUNCH_TAB_CLOSED_MESSAGE }
       }
       const message = error.message?.trim()
       return { kind: 'failed', message: message || "Couldn't start the agent." }
