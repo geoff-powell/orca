@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const store = vi.hoisted(() => ({
-  tabsByWorktree: {} as Record<string, unknown[]>,
-  closeTab: vi.fn(),
-  setActiveTabType: vi.fn()
-}))
+const store = vi.hoisted(() => {
+  const tabsByWorktree: Record<string, unknown[]> = {}
+  return { tabsByWorktree, closeTab: vi.fn(), setActiveTabType: vi.fn() }
+})
 vi.mock('@/store', () => ({ useAppStore: { getState: () => store } }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
 const web = vi.hoisted(() => ({
